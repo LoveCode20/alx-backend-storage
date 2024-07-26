@@ -6,6 +6,7 @@ Display in the format specified in the example
 """
 
 from pymongo import MongoClient
+from collections import Counter
 
 METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"]
 
@@ -13,11 +14,9 @@ METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"]
 def log_stats(mongo_collection, option=None):
     """
     Provide statistics about Nginx logs stored in MongoDB.
-    
     Args:
         mongo_collection: pymongo collection object for the nginx logs.
         option: Optional parameter to specify a particular method.
-
     Returns:
         None
     """
@@ -25,7 +24,8 @@ def log_stats(mongo_collection, option=None):
 
     # If option is provided, count documents with specific method
     if option:
-        count = mongo_collection.count_documents({"method": {"$regex": option}})
+        count = mongo_collection.count_documents(
+                {"method": {"$regex": option}})
         print(f"\tmethod {option}: {count}")
         return
 
@@ -41,6 +41,12 @@ def log_stats(mongo_collection, option=None):
     # Count number of logs with path="/status"
     status_check_count = mongo_collection.count_documents({"path": "/status"})
     print(f"{status_check_count} status check")
+
+    # Find the top 10 most common IP addresses
+    ip_counter = Counter(log["ip"] for log in mongo_collection.find())
+    print("IPs:")
+    for ip, count in ip_counter.most_common(10):
+        print(f"{ip}: {count}")
 
 
 if __name__ == "__main__":
